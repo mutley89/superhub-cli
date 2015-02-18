@@ -17,7 +17,7 @@ def portforward(opts):
     res = urllib.request.urlopen(url)
     soup = BeautifulSoup(res.read())
     rule_list = get_rules(soup)
-    opts.pf_command(rule_list, opts)
+    opts.pf_command(rule_list, soup, opts)
     if opts.pf_command in [add_rule, delete_rule]:
         send_rules(rule_list, soup, opts)
 
@@ -66,7 +66,7 @@ def send_rules(rule_list, soup, opts):
     res = urllib.request.urlopen(req)
     return res
 
-def list_rules(rule_list, opts):
+def list_rules(rule_list, soup, opts):
     row = "{:15} {:11} {:15} {:8} {:7}"
     print(row.format("Name", "Ports", "IP Address", "Protocol", "Enabled"))
     for rule in rule_list:
@@ -86,7 +86,7 @@ def list_rules(rule_list, opts):
             print(row.format(
                     rule["Name"], ports, ip, protocol, enabled))
 
-def add_rule(rule_list, opts):
+def add_rule(rule_list, soup, opts):
     if opts.name is None:
         # Set default rule name
         opts.name = protocols[opts.protocol] + ":" + opts.ports[0]
@@ -119,7 +119,7 @@ def add_rule(rule_list, opts):
             r'^var gatewayIP = "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)" ;',
             soup.text, re.M).group(1)
     # Router doesn't allow the subnet to be anything other than a /24
-    if address.split(".")[:3] != opts.address.split(".")[:3]:
+    if gateway.split(".")[:3] != opts.address.split(".")[:3]:
         raise PortForwardError("Address must be on same subnet as gateway")
     if opts.address == gateway:
         raise PortForwardError("Address can not be gateway address")
@@ -134,7 +134,7 @@ def add_rule(rule_list, opts):
     rule["Protocol"] = opts.protocol
     rule["Enable"] = "1"
 
-def delete_rule(rule_list, opts):
+def delete_rule(rule_list, soup, opts):
     for rule in rule_list:
         if rule["Name"] == opts.name:
             rule["Delete"] = "1"
