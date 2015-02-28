@@ -2,6 +2,7 @@ import collections
 import re
 import urllib.request
 import urllib.parse
+
 from bs4 import BeautifulSoup
 
 protocols = {"4": "TCP", "3": "UDP", "254": "TCP+UDP"}
@@ -18,7 +19,7 @@ def portforward(opts):
     soup = BeautifulSoup(res.read())
     rule_list = get_rules(soup)
     opts.pf_command(rule_list, soup, opts)
-    if opts.pf_command in [add_rule, delete_rule]:
+    if opts.pf_command is not list_rules:
         send_rules(rule_list, soup, opts)
 
 def get_rules(soup):
@@ -52,7 +53,7 @@ def send_rules(rule_list, soup, opts):
     # hidden <input> with a random id as the name attribute. The server
     # expects this back as the name, with a value of 0, as part of the POST
     # request. Neither the <div> nor the <input> have any id or identifying
-    # attributes, so just find a rule, then get the last input sibling.
+    # attributes, so just find a rule, then get the last <input> sibling.
     a_rule = soup.find("input", attrs={"name": "VmPortForwardingRuleName1"})
     data[a_rule.find_next_siblings("input")[-1]["name"]] = "0"
     # Other data sent by the web client. Server sends no response whatsover if
@@ -138,6 +139,22 @@ def delete_rule(rule_list, soup, opts):
     for rule in rule_list:
         if rule["Name"] == opts.name:
             rule["Delete"] = "1"
+            break
+    else:
+        raise PortForwardError("Rule with name %s doesn't exist" % opts.name)
+
+def enable_rule(rule_list, soup, opts):
+    for rule in rule_list:
+        if rule["Name"] == opts.name:
+            rule["Enable"] = "1"
+            break
+    else:
+        raise PortForwardError("Rule with name %s doesn't exist" % opts.name)
+
+def disable_rule(rule_list, soup, opts):
+    for rule in rule_list:
+        if rule["Name"] == opts.name:
+            rule["Enable"] = "0"
             break
     else:
         raise PortForwardError("Rule with name %s doesn't exist" % opts.name)

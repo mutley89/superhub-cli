@@ -51,7 +51,7 @@ def parse_args(cmdline=None):
                         "port must be a number, or 2 numbers seperated by -")
             if int(x) < 1 or int(x) > 65535:
                 raise argparse.ArgumentTypeError(
-                        "ports must be between 1 and 65535")
+                        "Ports must be between 1 and 65535")
         if len(res) == 2:
             if int(res[1]) < int(res[0]):
                 raise argparse.ArgumentTypeError(
@@ -77,9 +77,17 @@ def parse_args(cmdline=None):
             const="254", dest="protocol",
             help="Forward both tcp and udp ports")
     pf_delete_parser = pf_subparsers.add_parser("delete", aliases=["del"],
-            description="Delete Port forward rule")
+            description="Delete port forward rule")
     pf_delete_parser.set_defaults(pf_command=portforward.delete_rule)
     pf_delete_parser.add_argument("name", help="Name of rule to delete")
+    pf_enable_parser = pf_subparsers.add_parser("enable",
+            description="Enable port forward rule")
+    pf_enable_parser.set_defaults(pf_command=portforward.enable_rule)
+    pf_enable_parser.add_argument("name", help="Name of rule to enable")
+    pf_disable_parser = pf_subparsers.add_parser("disable",
+            description="Disable port forward rule")
+    pf_disable_parser.set_defaults(pf_command=portforward.disable_rule)
+    pf_disable_parser.add_argument("name", help="Name of rule to disable")
     if cmdline is None:
         return parser.parse_args()
     else:
